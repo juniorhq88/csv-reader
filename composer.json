@@ -1,0 +1,21 @@
+{
+    "name": "juniorhq88/csv-reader",
+    "description": "Algoritmo para TIV (Total Insurable Value)",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Junior",
+            "email": "juniorhq88@gmail.com"
+        }
+    ],
+    "keywords": [
+        "csv",
+        "xls"
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    }
+}
