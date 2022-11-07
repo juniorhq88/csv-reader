@@ -1,73 +1,69 @@
 <?php
+
+use App\Helper\Utils;
+
 require_once('vendor/autoload.php');
 
-$row = 1;
 $recorridos = 1;
-$tomados = 1;
-$tomados_total = 1;
 $time_start = microtime(true);
+
+$total = 0;
+$sum = 0;
+$sum2 = 0;
 
 $fp_tiv = fopen('results/tiv.csv', 'w'); //segund archivo las sumatorias
 
-fputcsv($fp_tiv, array('fecha', 'sum_capital', 'sum_intereses', 'sum_total'));
+fputcsv($fp_tiv, array('county', 'tiv_2012', 'line', 'total'));
 
-$array_sumas = array();
-if (($handle = fopen("data/FL_insurance_sample.csv", "r")) !== FALSE) { //archivo a leer
+$csvPath = "data/FL_insurance_sample2.csv";
+
+if (($handle = fopen($csvPath, "r")) !== FALSE) { //archivo a leer
+    $data = fgetcsv($handle, 10000, ",");
+    $data = array_shift($data);
+
+    $lastCounty = '';
+    $lastLine = 'Residential';
+
     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
         $num = count($data);
         $recorridos++;
 
-        if ($data[3] != 0 && $data[10] < 3) { //PLAZOVENTA
+        $county = $data[2];
+        $tiv2012 = $data[8];
+        $line = $data[15];
 
-            $tomados++;
-            $capital = ($data[2] - $data[6]) / $data[3];
-            //CAPITAL = (IMPORTEVENTA - ENGANCHE) / PLAZOVENTA
+        if ($lastCounty != $county && $lastCounty == '') {
+            $lastCounty = $county;
+        }
 
-            $interes = $data[4] / $data[3];
-            //INTERES = INTERESSOBRECOMPRA / PLAZOVENTA
-            $total = $capital + $interes;
+        if ($lastLine != $line) {
+            $lastLine = $line;
+        }
 
-            for ($i = 1; $i <= $data[3]; $i++) {
+        if ($lastCounty == $county) {
+            $lastCounty = $county;
+            $lastLine = $line;
 
-                $tomados_total++;
-
-                $dt = strtotime($data[1]);
-                $date = date("Y-m-d", strtotime("+" . $i . " month", $dt));
-                $dateI = date("Ymd", strtotime($date));
-
-
-                if (array_key_exists($dateI, $array_sumas)) {
-                    //si la fecha existe en mis indices
-
-
-                    $array_sumas[$dateI] = array(
-                        $date,
-                        ($array_sumas[$dateI][1] + $capital),
-                        ($array_sumas[$dateI][2] + $interes),
-                        ($array_sumas[$dateI][3] + $total)
-                    );
-                } else { //agregar como nuevo indice
-
-                    $array_sumas[$dateI] = array($date, $capital, $interes, $total);
-                }
+            if ($lastLine == 'Residential') {
+                $sum = $sum + $tiv2012;
+                $total = $sum;
+            } else {
+                $sum2 = $sum2 + $tiv2012;
+                $total = $sum2;
             }
+            fputcsv($fp_tiv, array($county, $tiv2012, $line, $total));
+        } else {
+            $lastCounty = $county;
+            $lastLine = $line;
+            $sum = 0;
+            $sum2 = 0;
         }
     }
 
 
-
-    foreach ($array_sumas as $key => $dia) {
-        fputcsv($fp_sum, $dia);
-    }
-
     echo "Rows: $recorridos \n";
-    echo "Taken: $tomados \n";
-    echo "TakenX: $tomados_total \n";
-    fclose($fp_tiv); //archivo de sumas
+    fclose($fp_tiv); //archivo de result
     fclose($handle); //archivo_origen
-
-
-
 
 
     $time_end = microtime(true);
